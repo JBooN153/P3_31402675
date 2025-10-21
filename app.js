@@ -17,7 +17,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://localhost:3000',
+                url: 'https://p3-31402675.onrender.com',
             },
         ],
     },
