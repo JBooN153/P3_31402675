@@ -28,3 +28,14 @@ jobs:
 
       - name: Ejecutar pruebas
         run: npm test
+
+      - name: Deploy to Render
+        if: success ()
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER }}
+          RENDER_SERVICE_ID: srv-d3rsm6buibrs739gc0l0
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys
