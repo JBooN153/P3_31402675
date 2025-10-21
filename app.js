@@ -1,45 +1,90 @@
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const express = require('express');
+const swaggerJsDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 
-var indexRouter = require('./P3_31402675/routes/index');
-var usersRouter = require('./P3_31402675/routes/users');
+const app = express();
+const port = 3000;
 
-var app = express();
-
-
-const app = require('./app');
-const request = require('supertest');
-
-app.get('/about', (req, res) => {
-  res.status(200).json({
-    status: "success",
-    data: {
-      nombreCompleto: "Jose Gregorio Sanchez Seijas",
-      cedula: "31402675",
-      seccion: "2"
-    }
-  });
-});
-
-app.get('/ping', (req, res) => {
-  res.sendStatus(200);
-});
-
-
-const { swaggerUi, specs } = require('./swagger');
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-
-
-app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+const swaggerOptions = {
+    swaggerDefinition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'API Documentation',
+            version: '1.0.0',
+            description: 'Documentación de la API para el servidor Express',
+        },
+        servers: [
+            {
+                url: 'http://localhost:3000',
+            },
+        ],
+    },
+    apis: ['./app.js'], // Ruta de los archivos que contienen la documentación JSDoc
+};
 
-module.exports = app;
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+app.get('/', (req, res) => {
+    res.send('¡Hola, mundo!');
+});
+
+/**
+ * @swagger
+ * /about:
+ *   get:
+ *     summary: Obtener información del usuario
+ *     responses:
+ *       200:
+ *         description: Información del usuario en formato JSend
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     nombreCompleto:
+ *                       type: string
+ *                     cedula:
+ *                       type: string
+ *                     seccion:
+ *                       type: string
+ */
+app.get('/about', (req, res) => {
+    const response = {
+        status: "success",
+        data: {
+            nombreCompleto: "Jose Gregorio Sanchez Seijas",
+            cedula: "V31402675",
+            seccion: "2"
+        }
+    };
+    res.json(response);
+});
+
+/**
+ * @swagger
+ * /ping:
+ *   get:
+ *     summary: Verificar si el servidor está en funcionamiento
+ *     responses:
+ *       200:
+ *         description: Respuesta OK
+ */
+app.get('/ping', (req, res) => {
+    res.sendStatus(200);
+});
+
+const server = app.listen(port, () => {
+    console.log(`Servidor corriendo en http://localhost:${port}`);
+});
+
+module.exports = server;
+
 
