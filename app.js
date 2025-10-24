@@ -1,36 +1,56 @@
+// app.js
+require('dotenv').config();
 const express = require('express');
-const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const swaggerJsDoc = require('swagger-jsdoc');
+const { iniciarServer } = require('./config/databaseConfig');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
+// Middleware
 app.use(express.json());
 
+// Swagger Config
 const swaggerOptions = {
-    swaggerDefinition: {
-        openapi: '3.0.0',
-        info: {
-            title: 'API Documentation',
-            version: '1.0.0',
-            description: 'Documentación de la API para el servidor Express',
-        },
-        servers: [
-            {
-                url: 'https://p3-31402675.onrender.com',
-            },
-        ],
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'API de Ejemplo',
+      version: '1.0.0',
+      description: 'Documentación de la API',
     },
-    apis: ['./app.js'], // Ruta de los archivos que contienen la documentación JSDoc
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    servers: [
+      {
+        url: 'http://localhost:3000',
+        description: 'Servidor local',
+      },
+      {
+        url: 'https://p3-31402675.onrender.com',
+        description: 'Servidor en Render',
+      },
+    ],
+  },
+  apis: ['./routes/*.js', './controllers/*.js' , './app.js'], // Documentación externa
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-app.get('/', (req, res) => {
-    res.send('¡Hola, mundo!');
-});
+// Rutas externas
+app.use('/', userRoutes);
 
+// Rutas externas adicionales
 /**
  * @swagger
  * /about:
@@ -57,15 +77,14 @@ app.get('/', (req, res) => {
  *                       type: string
  */
 app.get('/about', (req, res) => {
-    const response = {
-        status: "success",
-        data: {
-            nombreCompleto: "Jose Gregorio Sanchez Seijas",
-            cedula: "V31402675",
-            seccion: "2"
-        }
-    };
-    res.json(response);
+  res.json({
+    status: "success",
+    data: {
+      nombreCompleto: "Jose Gregorio Sanchez Seijas",
+      cedula: "V31402675",
+      seccion: "2"
+    }
+  });
 });
 
 /**
@@ -78,13 +97,16 @@ app.get('/about', (req, res) => {
  *         description: Respuesta OK
  */
 app.get('/ping', (req, res) => {
-    res.sendStatus(200);
+  res.sendStatus(200);
 });
 
-const server = app.listen(port, () => {
+// Iniciar servidor si no es test
+if (process.env.NODE_ENV !== 'test') {
+  iniciarServer();
+  app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
-});
+  });
+}
 
-module.exports = server;
 
-
+module.exports = app;
