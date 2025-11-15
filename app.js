@@ -5,6 +5,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerJsDoc = require('swagger-jsdoc');
 const { iniciarServer } = require('./config/databaseConfig');
 const userRoutes = require('./routes/userRoutes');
+const userRoutesV2 = require('./routes/userRoutesV2');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -49,6 +50,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Rutas externas
 app.use('/', userRoutes);
+app.use('/v2', userRoutesV2);
 
 // Rutas externas adicionales
 /**
