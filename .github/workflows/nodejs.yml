@@ -26,6 +26,13 @@ jobs:
       - name: Instalar dependencias
         run: npm install
 
+      - name: Create .env file
+        run: |
+          echo "DATABASE_PATH=./config/mi_base_de_datos.sqlite" >> .env
+          echo "JWT_SECRET=1234567890@@@@@1234567890!@#$%^&*()" >> .env
+          echo "NODE_ENV=development" >> .env
+          echo "TEST_DATABASE_PATH=:memory:" >> .env
+
       - name: Ejecutar pruebas
         run: npm test
 
