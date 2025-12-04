@@ -1009,8 +1009,6 @@ router.get('/p/:composite', publicView);
  *                 items:
  *                   - productId: 1
  *                     quantity: 2
- *                   - productId: 3
- *                     quantity: 1
  *                 paymentMethod: "CREDIT_CARD"
  *                 cardNumber: "4111111111111111"
  *                 cvv: "123"

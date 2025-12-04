@@ -123,7 +123,7 @@ router.post('/auth/register', registerUser)
  *               contrasena:
  *                 type: string
  *                 description: La contraseña del usuario.
- *                 example: "ContraseñaSegura123!"
+ *                 example: "contraseñaejemplo!"
  *     responses:
  *       200:
  *         description: Inicio de sesión exitoso.
