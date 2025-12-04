@@ -174,10 +174,6 @@ const router = express.Router();
  *     description: "Protected endpoints to manage tags"
  */
 
-// Public routes
-// Usar parámetro compuesto id-slug para permitir guiones en el slug
-router.get('/p/:composite', publicView);
-
 /**
  * @swagger
  * /v2/p/{composite}:
@@ -810,5 +806,8 @@ router.post('/games', authenticateJWT, require('../middlewares/validators').game
 router.get('/games/:id', authenticateJWT, getById);
 router.put('/games/:id', authenticateJWT, require('../middlewares/validators').gameUpdate, update);
 router.delete('/games/:id', authenticateJWT, deleteProduct);
+
+
+router.get('/p/:composite', publicView);
 
 module.exports = router;
