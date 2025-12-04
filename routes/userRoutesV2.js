@@ -3,6 +3,7 @@ const authenticateJWT = require('../middlewares/auth');
 const { getAll: getAllCategories, create: createCategory, update: updateCategory, delete: deleteCategory } = require('../controllers/Category');
 const { getAll: getAllTags, create: createTag, update: updateTag, delete: deleteTag } = require('../controllers/Tag');
 const { list: listProducts, publicView, getById, create, update, delete: deleteProduct } = require('../controllers/Product');
+const { create: createOrder, list: listOrders, getById: getOrderById } = require('../controllers/Order');
 
 const router = express.Router();
 
@@ -159,6 +160,158 @@ const router = express.Router();
  *         slug:
  *           type: string
  *           example: "god-of-war-ps4"
+ *
+ *     OrderCreate:
+ *       type: object
+ *       required:
+ *         - items
+ *         - paymentMethod
+ *         - cardNumber
+ *         - cvv
+ *         - expirationMonth
+ *         - expirationYear
+ *         - fullName
+ *       properties:
+ *         items:
+ *           type: array
+ *           minItems: 1
+ *           items:
+ *             type: object
+ *             required:
+ *               - productId
+ *               - quantity
+ *             properties:
+ *               productId:
+ *                 type: integer
+ *                 example: 1
+ *                 description: "ID del producto a comprar"
+ *               quantity:
+ *                 type: integer
+ *                 minimum: 1
+ *                 example: 2
+ *                 description: "Cantidad de unidades"
+ *           description: "Array de items a comprar (mínimo 1)"
+ *         paymentMethod:
+ *           type: string
+ *           example: "CREDIT_CARD"
+ *           description: "Método de pago (actualmente solo CREDIT_CARD)"
+ *         cardNumber:
+ *           type: string
+ *           example: "4111111111111111"
+ *           description: "Número de tarjeta (16 dígitos)"
+ *         cvv:
+ *           type: string
+ *           example: "123"
+ *           description: "Código de verificación (3-4 dígitos)"
+ *         expirationMonth:
+ *           type: integer
+ *           example: 12
+ *           minimum: 1
+ *           maximum: 12
+ *           description: "Mes de vencimiento"
+ *         expirationYear:
+ *           type: integer
+ *           example: 2025
+ *           description: "Año de vencimiento (4 dígitos)"
+ *         fullName:
+ *           type: string
+ *           example: "John Doe"
+ *           description: "Nombre titular de la tarjeta"
+ *         currency:
+ *           type: string
+ *           example: "USD"
+ *           default: "USD"
+ *           description: "Moneda de la transacción"
+ *         description:
+ *           type: string
+ *           example: "Compra de juegos PS4"
+ *           description: "Descripción de la orden"
+ *
+ *     OrderItem:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           readOnly: true
+ *           example: 1
+ *         product:
+ *           $ref: '#/components/schemas/Game'
+ *         quantity:
+ *           type: integer
+ *           example: 2
+ *           description: "Cantidad de unidades en la orden"
+ *         unitPrice:
+ *           type: number
+ *           format: float
+ *           example: 59.99
+ *           description: "Precio unitario al momento de la compra (para auditoría histórica)"
+ *         subtotal:
+ *           type: number
+ *           format: float
+ *           example: 119.98
+ *           description: "Subtotal = quantity * unitPrice"
+ *
+ *     Order:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           readOnly: true
+ *           example: 1
+ *         user:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: integer
+ *               example: 1
+ *             nombre:
+ *               type: string
+ *               example: "John Doe"
+ *             email:
+ *               type: string
+ *               example: "john@example.com"
+ *         status:
+ *           type: string
+ *           enum: [PENDING, COMPLETED, CANCELED, PAYMENT_FAILED]
+ *           example: "COMPLETED"
+ *           description: "Estado de la orden"
+ *         totalAmount:
+ *           type: number
+ *           format: float
+ *           example: 119.98
+ *           description: "Monto total de la orden"
+ *         currency:
+ *           type: string
+ *           example: "USD"
+ *           description: "Moneda de la transacción"
+ *         transactionId:
+ *           type: string
+ *           example: "txn_abc123"
+ *           nullable: true
+ *           description: "ID de la transacción en el proveedor de pagos"
+ *         paymentMethod:
+ *           type: string
+ *           example: "CREDIT_CARD"
+ *           description: "Método de pago utilizado"
+ *         description:
+ *           type: string
+ *           example: "Compra de juegos PS4"
+ *           description: "Descripción de la orden"
+ *         items:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/OrderItem'
+ *           description: "Items comprados en la orden"
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           readOnly: true
+ *           example: "2025-12-04T20:30:00Z"
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           readOnly: true
+ *           example: "2025-12-04T20:30:00Z"
  */
 
 /**
@@ -172,6 +325,8 @@ const router = express.Router();
  *     description: "Protected endpoints to manage categories"
  *   - name: "Admin - Tags"
  *     description: "Protected endpoints to manage tags"
+ *   - name: "Admin - Orders"
+ *     description: "Protected endpoints for orders and payments (transactional operations)"
  */
 
 /**
@@ -809,5 +964,353 @@ router.delete('/games/:id', authenticateJWT, deleteProduct);
 
 
 router.get('/p/:composite', publicView);
+
+/**
+ * @swagger
+ * /v2/orders:
+ *   post:
+ *     summary: "Crear una orden con pago (OPERACIÓN TRANSACCIONAL ATÓMICA)"
+ *     description: |
+ *       Crea una orden completa con procesamiento de pago integrado.
+ *       **IMPORTANTE: Esta es una operación transaccional que es ATÓMICA (todo o nada):**
+ *       
+ *       **Flujo de la transacción:**
+ *       1. Validar stock disponible para todos los items
+ *       2. Calcular monto total de la orden
+ *       3. Procesar el pago mediante la tarjeta de crédito
+ *       4. Si el pago es exitoso:
+ *          - Reducir stock de cada producto
+ *          - Crear registro de Order
+ *          - Crear registros de OrderItem (con precio histórico)
+ *          - COMMIT de transacción
+ *       5. Si algún paso falla:
+ *          - ROLLBACK completo: stock NO es modificado, orden NO es creada
+ *       
+ *       **Garantías:**
+ *       - Si recibe 201, la orden fue creada exitosamente Y el pago fue procesado AND stock fue reducido
+ *       - Si recibe 400, nada fue modificado (completo rollback)
+ *       - Cada OrderItem preserva el unitPrice al momento de la compra (auditoría histórica)
+ *       
+ *       **Métodos de pago soportados:**
+ *       - CREDIT_CARD: Tarjeta de crédito integrada con https://fakepayment.onrender.com
+ *     tags: ["Admin - Orders"]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/OrderCreate'
+ *           examples:
+ *             successful:
+ *               summary: "Ejemplo de orden exitosa"
+ *               value:
+ *                 items:
+ *                   - productId: 1
+ *                     quantity: 2
+ *                   - productId: 3
+ *                     quantity: 1
+ *                 paymentMethod: "CREDIT_CARD"
+ *                 cardNumber: "4111111111111111"
+ *                 cvv: "123"
+ *                 expirationMonth: 12
+ *                 expirationYear: 2025
+ *                 fullName: "John Doe"
+ *                 currency: "USD"
+ *                 description: "Compra de juegos PS4"
+ *     responses:
+ *       201:
+ *         description: "✅ Orden creada exitosamente Y pago procesado Y stock actualizado"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: "Orden creada exitosamente y pago procesado"
+ *                 data:
+ *                   $ref: '#/components/schemas/Order'
+ *       400:
+ *         description: |
+ *           ❌ Validación fallida O stock insuficiente O pago rechazado.
+ *           **Garantizado: Transacción hizo ROLLBACK - stock NO fue modificado, orden NO fue creada**
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: fail
+ *                 message:
+ *                   type: string
+ *               examples:
+ *                 insufficientStock:
+ *                   summary: "Stock insuficiente"
+ *                   value:
+ *                     status: fail
+ *                     message: "Stock insuficiente para God of War. Disponible: 5, Solicitado: 10"
+ *                 paymentRejected:
+ *                   summary: "Pago rechazado"
+ *                   value:
+ *                     status: fail
+ *                     message: "Pago rechazado: Fondos insuficientes"
+ *                 invalidItems:
+ *                   summary: "Items inválidos"
+ *                   value:
+ *                     status: fail
+ *                     message: "Items es requerido y debe ser un array no vacío"
+ *       401:
+ *         description: "❌ No autorizado - Token JWT inválido o ausente"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: fail
+ *                 message:
+ *                   type: string
+ *             examples:
+ *               noToken:
+ *                 summary: "Token ausente"
+ *                 value:
+ *                   status: fail
+ *                   message: "No token provided"
+ *               invalidToken:
+ *                 summary: "Token inválido"
+ *                 value:
+ *                   status: fail
+ *                   message: "Invalid token"
+ *               expiredToken:
+ *                 summary: "Token expirado"
+ *                 value:
+ *                   status: fail
+ *                   message: "Token expired"
+ *       500:
+ *         description: "❌ Error interno del servidor"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: error
+ *                 message:
+ *                   type: string
+ *                 error:
+ *                   type: string
+ *             examples:
+ *               paymentApiError:
+ *                 summary: "Error comunicándose con API de pagos"
+ *                 value:
+ *                   status: error
+ *                   message: "Error creando la orden"
+ *                   error: "Error comunicándose con el servidor de pagos"
+ *               databaseError:
+ *                 summary: "Error de base de datos"
+ *                 value:
+ *                   status: error
+ *                   message: "Error creando la orden"
+ *                   error: "Database connection failed"
+ *               timeoutError:
+ *                 summary: "Timeout en API de pagos"
+ *                 value:
+ *                   status: error
+ *                   message: "Error creando la orden"
+ *                   error: "Payment API timeout after 15000ms"
+ *   get:
+ *     summary: "Obtener órdenes del usuario autenticado (con paginación)"
+ *     tags: ["Admin - Orders"]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: "Número de página (comienza en 1)"
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           maximum: 50
+ *         description: "Elementos por página (máximo 50)"
+ *     responses:
+ *       200:
+ *         description: "Lista de órdenes del usuario autenticado"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Order'
+ *                     meta:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                           example: 5
+ *                         page:
+ *                           type: integer
+ *                           example: 1
+ *                         limit:
+ *                           type: integer
+ *                           example: 10
+ *                         totalPages:
+ *                           type: integer
+ *                           example: 1
+ *             examples:
+ *               success:
+ *                 summary: "Órdenes encontradas"
+ *                 value:
+ *                   status: success
+ *                   data:
+ *                     items:
+ *                       - id: 1
+ *                         status: COMPLETED
+ *                         totalAmount: 119.98
+ *                         currency: USD
+ *                         createdAt: "2025-12-04T20:30:00Z"
+ *                       - id: 2
+ *                         status: COMPLETED
+ *                         totalAmount: 59.99
+ *                         currency: USD
+ *                         createdAt: "2025-12-04T19:45:00Z"
+ *                     meta:
+ *                       total: 2
+ *                       page: 1
+ *                       limit: 10
+ *                       totalPages: 1
+ *               empty:
+ *                 summary: "Sin órdenes"
+ *                 value:
+ *                   status: success
+ *                   data:
+ *                     items: []
+ *                     meta:
+ *                       total: 0
+ *                       page: 1
+ *                       limit: 10
+ *                       totalPages: 0
+ *       401:
+ *         description: "❌ No autorizado - Token JWT inválido o ausente"
+ *         content:
+ *           application/json:
+ *             examples:
+ *               noToken:
+ *                 summary: "Token ausente"
+ *                 value:
+ *                   status: fail
+ *                   message: "No token provided"
+ *               invalidToken:
+ *                 summary: "Token inválido"
+ *                 value:
+ *                   status: fail
+ *                   message: "Invalid token"
+ *       500:
+ *         description: "❌ Error interno del servidor"
+ *         content:
+ *           application/json:
+ *             examples:
+ *               databaseError:
+ *                 summary: "Error de base de datos"
+ *                 value:
+ *                   status: error
+ *                   message: "Error obteniendo órdenes"
+ *                   error: "Database connection failed"
+ * /v2/orders/{id}:
+ *   get:
+ *     summary: "Obtener detalle de una orden específica"
+ *     description: |
+ *       Recupera los detalles completos de una orden incluyendo:
+ *       - Información del usuario comprador
+ *       - Estado de la orden (PENDING, COMPLETED, CANCELED, PAYMENT_FAILED)
+ *       - Detalles de cada item con precio histórico (unitPrice)
+ *       - Información de la transacción de pago (transactionId)
+ *       - Timestamps de creación y actualización
+ *       
+ *       **Seguridad:** El usuario autenticado solo puede ver sus propias órdenes
+ *     tags: ["Admin - Orders"]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: "ID de la orden"
+ *     responses:
+ *       200:
+ *         description: "Detalle completo de la orden"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   $ref: '#/components/schemas/Order'
+ *       400:
+ *         description: "❌ ID de orden inválido (no es un número)"
+ *         content:
+ *           application/json:
+ *             examples:
+ *               invalidId:
+ *                 summary: "ID no es número"
+ *                 value:
+ *                   status: fail
+ *                   message: "Invalid product id"
+ *       404:
+ *         description: "❌ Orden no encontrada"
+ *         content:
+ *           application/json:
+ *             examples:
+ *               notFound:
+ *                 summary: "Orden no existe"
+ *                 value:
+ *                   status: fail
+ *                   message: "Order not found"
+ *       401:
+ *         description: "❌ No autorizado - Token JWT inválido o ausente"
+ *         content:
+ *           application/json:
+ *             examples:
+ *               noToken:
+ *                 summary: "Token ausente"
+ *                 value:
+ *                   status: fail
+ *                   message: "No token provided"
+ *               invalidToken:
+ *                 summary: "Token inválido"
+ *                 value:
+ *                   status: fail
+ *                   message: "Invalid token"
+ */
+// Order routes (protected)
+router.post('/orders', authenticateJWT, createOrder);
+router.get('/orders', authenticateJWT, listOrders);
+router.get('/orders/:id', authenticateJWT, getOrderById);
 
 module.exports = router;

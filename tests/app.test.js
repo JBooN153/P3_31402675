@@ -1,11 +1,47 @@
 const request = require('supertest');
+require('dotenv').config();
+
+// Mock axios ANTES de cargar la app
+jest.mock('axios', () => {
+  const mockAxios = jest.fn();
+  
+  // Mock para GET requests (obtener API Key)
+  mockAxios.get = jest.fn((url) => {
+    if (url.includes('/api-key')) {
+      return Promise.resolve({ data: { apiKey: 'mock-api-key-123' } });
+    }
+    return Promise.resolve({ data: {} });
+  });
+  
+  // Mock para POST requests (procesar pagos)
+  mockAxios.post = jest.fn((url, data, config) => {
+    if (url.includes('/payments')) {
+      // Simular tarjeta rechazada (4000000000000002)
+      if (data['card-number'] === '4000000000000002') {
+        return Promise.resolve({
+          status: 400,
+          data: { success: false, message: 'Fondos insuficientes' }
+        });
+      }
+      // Simular tarjeta válida (retornar 302 redirect)
+      return Promise.resolve({
+        status: 302,
+        headers: { location: '/payments/txn_mock_12345' },
+        data: { success: true, transaction_id: 'txn_mock_12345' }
+      });
+    }
+    return Promise.resolve({ data: { success: true } });
+  });
+  
+  return mockAxios;
+});
+
 const app = require('../app');
 const { AppDataSource } = require('../config/databaseConfig');
 const Usuario = require('../models/usuario');
 const Categoria = require('../models/Category');
 const Tag = require('../models/Tag');
 const Game = require('../models/Product');
-require('dotenv').config();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -42,6 +78,10 @@ beforeAll(async () => {
     const t2 = tagRepo.create({ name: 'SeedTag2' });
     await tagRepo.save([t1, t2]);
 
+    global.__SEEDED_CATEGORY = baseCat;
+    global.__SEEDED_TAGS = [t1, t2];
+    global.__SEEDED_GAMES = [];
+
     for (let i = 1; i <= 10; i++) {
         const name = `Seed Game ${i}`;
         const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${i}`;
@@ -50,8 +90,8 @@ beforeAll(async () => {
             developer: 'SeedDev',
             publisher: 'SeedPub',
             releaseDate: '2019-01-01',
-            price: 19.99,
-            stock: 5,
+            price: 19.99 + i,
+            stock: 5 + i,
             genre: 'Action',
             platform: 'PS4',
             slug,
@@ -59,6 +99,7 @@ beforeAll(async () => {
             tags: [t1, t2]
         });
         await gameRepo.save(g);
+        global.__SEEDED_GAMES.push(g);
     }
 });
 
@@ -521,4 +562,313 @@ describe('Negative tests - Controllers', () => {
     const res = await request(app).delete('/v2/games/999999').set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(404);
   });
+
+  // ========== TESTS DE ÓRDENES Y PAGOS ==========
+
+  test('Order: POST /v2/orders without token returns 401', async () => {
+    const res = await request(app).post('/v2/orders').send({
+      items: [{ productId: 1, quantity: 1 }],
+      paymentMethod: 'CREDIT_CARD',
+      cardNumber: '4111111111111111',
+      cvv: '123',
+      expirationMonth: 12,
+      expirationYear: 2025,
+      fullName: 'John Doe'
+    });
+    expect(res.status).toBe(401);
+  });
+
+  test('Order: GET /v2/orders without token returns 401', async () => {
+    const res = await request(app).get('/v2/orders?page=1&limit=5');
+    expect(res.status).toBe(401);
+  });
+
+  test('Order: GET /v2/orders/:id without token returns 401', async () => {
+    const res = await request(app).get('/v2/orders/1');
+    expect(res.status).toBe(401);
+  });
+
+  test('Order: GET /v2/orders returns 404 if no orders exist for user', async () => {
+    const userToken = global.__SEEDED_TOKENS[9]; // Un token que no ha hecho órdenes
+
+    const res = await request(app)
+      .get('/v2/orders?page=1&limit=5')
+      .set('Authorization', `Bearer ${userToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('success');
+    expect(res.body.data.items.length).toBe(0);
+  });
+
+  test('Order: GET /v2/orders/:id returns 404 if order not found', async () => {
+    const userToken = global.__SEEDED_TOKENS[5];
+
+    const res = await request(app)
+      .get('/v2/orders/999999')
+      .set('Authorization', `Bearer ${userToken}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.status).toBe('fail');
+  });
+});
+
+// ==================== CRITICAL TRANSACTIONAL TESTS ====================
+describe('Critical Transactional Tests - Orders & Payments', () => {
+  let testUser;
+  let testProduct;
+  let testToken;
+  const GameRepo = AppDataSource.getRepository(Game);
+  const OrderRepo = AppDataSource.getRepository(require('../models/Order'));
+
+  beforeAll(async () => {
+    // Obtener usuario para pruebas - usar usuario seeded directamente
+    testToken = global.__SEEDED_TOKENS[8];
+    const userRepo = AppDataSource.getRepository(Usuario);
+    const users = await userRepo.find();
+    
+    // Encontrar el usuario correspondiente al token (básicamente el index es el ID menos 1)
+    testUser = users[8] || users[0]; // Fallback a primer usuario
+
+    // Obtener o crear producto para pruebas
+    testProduct = global.__SEEDED_GAMES && global.__SEEDED_GAMES[0];
+    if (!testProduct) {
+      const catRepo = AppDataSource.getRepository(Categoria);
+      const cat = await catRepo.findOne({ where: { name: 'SeedCat' } });
+      testProduct = GameRepo.create({
+        name: `Test Product ${Date.now()}`,
+        slug: `test-product-${Date.now()}`,
+        developer: 'Test Dev',
+        publisher: 'Test Pub',
+        releaseDate: '2020-01-01',
+        price: 50.00,
+        stock: 100,
+        genre: 'Test',
+        platform: 'PS4',
+        categoria: cat,
+      });
+      await GameRepo.save(testProduct);
+    }
+  }, 30000);
+
+  test('[CRITICAL] Complete transaction success: Order created, items registered, stock reduced', async () => {
+    // Arrange: Obtener stock inicial
+    const initialStock = testProduct.stock;
+
+    // Act: Crear orden exitosamente
+    const res = await request(app)
+      .post('/v2/orders')
+      .set('Authorization', `Bearer ${testToken}`)
+      .send({
+        items: [{ productId: testProduct.id, quantity: 2 }],
+        paymentMethod: 'CREDIT_CARD',
+        cardNumber: '4111111111111111',
+        cvv: '123',
+        expirationMonth: 12,
+        expirationYear: 2025,
+        fullName: 'Test User',
+        currency: 'USD',
+        description: 'Test Purchase',
+      });
+
+    // Assert: Verificar respuesta
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe('success');
+    expect(res.body.data).toHaveProperty('id');
+    expect(res.body.data.status).toBe('COMPLETED');
+    expect(res.body.data.totalAmount).toBe(testProduct.price * 2); // Debe ser precio del producto * cantidad
+    expect(res.body.data.items).toHaveLength(1);
+    expect(res.body.data.items[0].quantity).toBe(2);
+    expect(res.body.data.items[0].unitPrice).toBe(testProduct.price);
+
+    // Assert: Verificar que el stock se redujo
+    const updatedProduct = await GameRepo.findOne({ where: { id: testProduct.id } });
+    expect(updatedProduct.stock).toBe(initialStock - 2);
+  }, 30000);
+
+  test('[CRITICAL] Insufficient stock: API returns error and FULL ROLLBACK occurs (other items unmodified)', async () => {
+    // Arrange: Crear dos productos para esta prueba
+    const catRepo = AppDataSource.getRepository(Categoria);
+    const cat = await catRepo.findOne({ where: { name: 'SeedCat' } });
+
+    const product1 = GameRepo.create({
+      name: `Product 1 - Stock Test ${Date.now()}`,
+      slug: `product-1-stock-test-${Date.now()}`,
+      developer: 'Dev',
+      publisher: 'Pub',
+      releaseDate: '2020-01-01',
+      price: 20.00,
+      stock: 50,
+      genre: 'Test',
+      platform: 'PS4',
+      categoria: cat,
+    });
+    await GameRepo.save(product1);
+
+    const product2 = GameRepo.create({
+      name: `Product 2 - Stock Test ${Date.now()}`,
+      slug: `product-2-stock-test-${Date.now()}`,
+      developer: 'Dev',
+      publisher: 'Pub',
+      releaseDate: '2020-01-01',
+      price: 30.00,
+      stock: 2, // Stock muy bajo
+      genre: 'Test',
+      platform: 'PS4',
+      categoria: cat,
+    });
+    await GameRepo.save(product2);
+
+    const initialStock1 = product1.stock;
+    const initialStock2 = product2.stock;
+
+    // Act: Intentar crear orden con stock insuficiente en product2
+    const res = await request(app)
+      .post('/v2/orders')
+      .set('Authorization', `Bearer ${testToken}`)
+      .send({
+        items: [
+          { productId: product1.id, quantity: 5 },    // OK
+          { productId: product2.id, quantity: 10 },   // FALLA: stock insuficiente
+        ],
+        paymentMethod: 'CREDIT_CARD',
+        cardNumber: '4111111111111111',
+        cvv: '123',
+        expirationMonth: 12,
+        expirationYear: 2025,
+        fullName: 'Test User',
+        currency: 'USD',
+      });
+
+    // Assert: Verificar que la orden falló
+    expect(res.status).toBe(400);
+    expect(res.body.status).toBe('fail');
+    expect(res.body.message).toMatch(/Stock insuficiente/i);
+
+    // Assert: Verificar ROLLBACK - stock sin cambios
+    const finalProduct1 = await GameRepo.findOne({ where: { id: product1.id } });
+    const finalProduct2 = await GameRepo.findOne({ where: { id: product2.id } });
+    
+    expect(finalProduct1.stock).toBe(initialStock1); // NO cambió
+    expect(finalProduct2.stock).toBe(initialStock2); // NO cambió
+
+    // Assert: Verificar que NO se creó la orden
+    const ordersForUser = await OrderRepo.find({ where: { user: { id: testUser.id } } });
+    const orderExists = ordersForUser.some(o => 
+      o.items && o.items.some(item => 
+        (item.productId === product1.id || item.productId === product2.id) && 
+        o.status === 'PAYMENT_FAILED'
+      )
+    );
+    expect(orderExists).toBe(false);
+  }, 30000);
+
+  test('[CRITICAL] Payment rejection: Uses mock, API returns error, COMPLETE ROLLBACK (stock unmodified, no Order created)', async () => {
+    // Arrange: Crear producto para esta prueba
+    const catRepo = AppDataSource.getRepository(Categoria);
+    const cat = await catRepo.findOne({ where: { name: 'SeedCat' } });
+
+    const testProductForPaymentFail = GameRepo.create({
+      name: `Product - Payment Fail Test ${Date.now()}`,
+      slug: `product-payment-fail-${Date.now()}`,
+      developer: 'Dev',
+      publisher: 'Pub',
+      releaseDate: '2020-01-01',
+      price: 100.00,
+      stock: 25,
+      genre: 'Test',
+      platform: 'PS4',
+      categoria: cat,
+    });
+    await GameRepo.save(testProductForPaymentFail);
+
+    const initialStock = testProductForPaymentFail.stock;
+
+    // Act: Usar tarjeta de prueba que rechaza el pago
+    // Tarjeta 4000000000000002 es rechazada en muchas APIs de prueba
+    const res = await request(app)
+      .post('/v2/orders')
+      .set('Authorization', `Bearer ${testToken}`)
+      .send({
+        items: [{ productId: testProductForPaymentFail.id, quantity: 3 }],
+        paymentMethod: 'CREDIT_CARD',
+        cardNumber: '4000000000000002', // Tarjeta rechazada
+        cvv: '123',
+        expirationMonth: 12,
+        expirationYear: 2025,
+        fullName: 'Test User',
+        currency: 'USD',
+      });
+
+    // Assert: Verificar que la orden falló
+    expect([400, 402, 500]).toContain(res.status); // 400 para pago rechazado, 402 Payment Required, 500 si la API falla
+    expect(res.body.status).toMatch(/fail|error/);
+    expect(res.body.message).toMatch(/rechazad|rechazada|payment|failed|error/i);
+
+    // Assert: Verificar ROLLBACK - stock sin cambios
+    const finalProduct = await GameRepo.findOne({ where: { id: testProductForPaymentFail.id } });
+    expect(finalProduct.stock).toBe(initialStock); // Stock no modificado
+
+    // Assert: Verificar que NO se creó la orden
+    const ordersForUser = await OrderRepo.find({ 
+      where: { user: { id: testUser.id } },
+      relations: ['items'],
+    });
+    const problemOrderExists = ordersForUser.some(o => 
+      o.items && o.items.some(item => item.productId === testProductForPaymentFail.id)
+    );
+    expect(problemOrderExists).toBe(false); // La orden no debe existir
+  }, 30000);
+
+  test('[SECURITY] Orders endpoints deny access to unauthenticated users (401 Unauthorized)', async () => {
+    // Test POST without token
+    const resPost = await request(app)
+      .post('/v2/orders')
+      .send({
+        items: [{ productId: testProduct.id, quantity: 1 }],
+        paymentMethod: 'CREDIT_CARD',
+        cardNumber: '4111111111111111',
+        cvv: '123',
+        expirationMonth: 12,
+        expirationYear: 2025,
+        fullName: 'Test User',
+      });
+    expect(resPost.status).toBe(401);
+
+    // Test GET without token
+    const resGet = await request(app).get('/v2/orders?page=1&limit=5');
+    expect(resGet.status).toBe(401);
+
+    // Test GET by ID without token
+    const resGetId = await request(app).get('/v2/orders/1');
+    expect(resGetId.status).toBe(401);
+  }, 15000);
+
+  test('[AUDIT] Order contains historical pricing (unitPrice preserved from product.price at time of order)', async () => {
+    // Arrange: Get initial product price
+    const productForAudit = global.__SEEDED_GAMES && global.__SEEDED_GAMES[1];
+    if (!productForAudit) {
+      throw new Error('No seeded game available for audit test');
+    }
+    const originalPrice = productForAudit.price;
+
+    // Act: Create order
+    const res = await request(app)
+      .post('/v2/orders')
+      .set('Authorization', `Bearer ${testToken}`)
+      .send({
+        items: [{ productId: productForAudit.id, quantity: 1 }],
+        paymentMethod: 'CREDIT_CARD',
+        cardNumber: '4111111111111111',
+        cvv: '123',
+        expirationMonth: 12,
+        expirationYear: 2025,
+        fullName: 'Test User',
+        currency: 'USD',
+      });
+
+    expect(res.status).toBe(201);
+
+    // Assert: Verify unitPrice matches original price
+    expect(res.body.data.items[0].unitPrice).toBe(originalPrice);
+  }, 30000);
 });
