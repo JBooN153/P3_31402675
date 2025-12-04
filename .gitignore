@@ -1,7 +1,4 @@
 node_modules
-<<<<<<< HEAD
-# Keep environment variables out of version control.
-=======
->>>>>>> c9fe68a33cd1be27073856fca758bec3badde3fb
 .env
 database.sqlite
+# Keep environment variables and database out of version control
