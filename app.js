@@ -4,6 +4,7 @@ const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsDoc = require('swagger-jsdoc');
 const { iniciarServer } = require('./config/databaseConfig');
+const PaymentApiInitializer = require('./services/PaymentApiInitializer');
 const userRoutes = require('./routes/userRoutes');
 const userRoutesV2 = require('./routes/userRoutesV2');
 
@@ -104,9 +105,20 @@ app.get('/ping', (req, res) => {
 
 // Iniciar servidor si no es test
 if (process.env.NODE_ENV !== 'test') {
-  iniciarServer();
-  app.listen(port, () => {
-    console.log(`Servidor corriendo en http://localhost:${port}`);
+  (async () => {
+    // Inicializar configuración de pagos
+    await PaymentApiInitializer.inicializar();
+    
+    // Iniciar base de datos
+    iniciarServer();
+    
+    // Escuchar en el puerto
+    app.listen(port, () => {
+      console.log(`Servidor corriendo en http://localhost:${port}`);
+    });
+  })().catch(err => {
+    console.error('Error al iniciar el servidor:', err);
+    process.exit(1);
   });
 }
 
