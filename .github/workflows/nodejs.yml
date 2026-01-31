@@ -67,11 +67,11 @@ jobs:
 
       - name: ✅ Verificar build
         run: |
-          if [ -d "web/dist" ]; then
-            echo "✓ Frontend build completado"
-            ls -la web/dist | head -10
+          if [ -d "public" ]; then
+            echo "✓ Frontend build completado en public/"
+            ls -la public | head -10
           else
-            echo "⚠ Frontend dist no encontrado (continuando...)"
+            echo "⚠ Frontend build no encontrado en public/ (continuando...)"
           fi
 
   # ===== DEPLOY =====
