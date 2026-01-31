@@ -28,11 +28,11 @@ jobs:
 
       # ===== BACKEND - API =====
       - name: Instalar dependencias API
-        working-directory: ./api/src
+        working-directory: .
         run: npm ci --prefer-offline --no-audit
 
       - name: Crear archivo .env API (testing)
-        working-directory: ./api/src
+        working-directory: .
         run: |
           cat > .env << EOF
           PORT=3000
@@ -45,11 +45,11 @@ jobs:
           EOF
 
       - name: Validar instalación de dependencias API
-        working-directory: ./api/src
+        working-directory: .
         run: npm list | head -20
 
       - name: Ejecutar pruebas API
-        working-directory: ./api/src
+        working-directory: .
         run: npm test -- --passWithNoTests --forceExit --detectOpenHandles
         continue-on-error: true
 
