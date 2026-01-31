@@ -31,10 +31,12 @@ jobs:
           ls -la
           echo ""
           echo "📦 Verificando package.json en api/:"
-          test -f api/package.json && echo "✅ api/package.json encontrado" || echo "❌ api/package.json NO encontrado"
+          test -f api/package.json && echo "✅ api/package.json encontrado" || (echo "❌ api/package.json NO encontrado" && exit 1)
           echo ""
           echo "📁 Verificando carpeta web:"
-          test -d web && echo "✅ carpeta web encontrada" || echo "❌ carpeta web NO encontrada"
+          test -d web && echo "✅ carpeta web encontrada" || (echo "❌ carpeta web NO encontrada" && exit 1)
+          echo ""
+          echo "✅ Estructura monorepo verificada correctamente"
 
       # ===== BACKEND - API =====
       - name: Instalar dependencias API
