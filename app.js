@@ -12,7 +12,7 @@ const userRoutesV2 = require('./routes/userRoutesV2');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
+// Middleware xd
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
