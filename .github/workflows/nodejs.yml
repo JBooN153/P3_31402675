@@ -17,21 +17,21 @@ jobs:
         node-version: [18.x]
 
     steps:
-      - name:  Checkout código fuente
+      - name: Checkout código fuente
         uses: actions/checkout@v4
 
-      - name:  Configurar Node.js ${{ matrix.node-version }}
+      - name: Configurar Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
       # ===== BACKEND - API =====
-      - name:  Instalar dependencias API
+      - name: Instalar dependencias API
         working-directory: ./api/src
         run: npm ci --prefer-offline --no-audit
 
-      - name:  Crear archivo .env API (testing)
+      - name: Crear archivo .env API (testing)
         working-directory: ./api/src
         run: |
           cat > .env << EOF
@@ -44,21 +44,21 @@ jobs:
           PAYMENT_API_URL=https://fakepayment.onrender.com
           EOF
 
-      - name:  Validar instalación de dependencias API
+      - name: Validar instalación de dependencias API
         working-directory: ./api/src
         run: npm list | head -20
 
-      - name:  Ejecutar pruebas API
+      - name: Ejecutar pruebas API
         working-directory: ./api/src
         run: npm test -- --passWithNoTests --forceExit --detectOpenHandles
         continue-on-error: true
 
       # ===== FRONTEND - WEB =====
-      - name:  Instalar dependencias Web
+      - name: Instalar dependencias Web
         working-directory: ./web
         run: npm ci --prefer-offline --no-audit
 
-      - name:  Crear archivo .env Web (production)
+      - name: Crear archivo .env Web (production)
         working-directory: ./web
         run: |
           cat > .env << EOF
@@ -66,15 +66,15 @@ jobs:
           VITE_NODE_ENV=production
           EOF
 
-      - name:  Validar instalación de dependencias Web
+      - name: Validar instalación de dependencias Web
         working-directory: ./web
         run: npm list | head -20
 
-      - name:  Construir Frontend
+      - name: Construir Frontend
         working-directory: ./web
         run: npm run build
 
-      - name:  Validar build de Frontend
+      - name: Validar build de Frontend
         working-directory: ./web
         run: |
           if [ ! -d "dist" ]; then
@@ -91,11 +91,11 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name:  Checkout código fuente
+      - name: Checkout código fuente
         uses: actions/checkout@v4
 
-      - name:  Deploy API a Render
-        if: ${{ secrets.RENDER_API_KEY && secrets.RENDER_SERVICE_ID_API }}
+      - name: Deploy API a Render
+        if: ${{ secrets.RENDER_API_KEY != '' && secrets.RENDER_SERVICE_ID_API != '' }}
         run: |
           echo "🔄 Iniciando deployment de API..."
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
@@ -114,8 +114,8 @@ jobs:
             echo " API deployment warning: HTTP $HTTP_CODE"
           fi
 
-      - name:  Deploy Web a Render
-        if: ${{ secrets.RENDER_API_KEY && secrets.RENDER_SERVICE_ID_WEB }}
+      - name: Deploy Web a Render
+        if: ${{ secrets.RENDER_API_KEY != '' && secrets.RENDER_SERVICE_ID_WEB != '' }}
         run: |
           echo " Iniciando deployment de Web..."
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
@@ -134,8 +134,8 @@ jobs:
             echo " Web deployment warning: HTTP $HTTP_CODE"
           fi
 
-      - name:  Aviso de Secrets
-        if: ${{ !secrets.RENDER_API_KEY || !secrets.RENDER_SERVICE_ID_API || !secrets.RENDER_SERVICE_ID_WEB }}
+      - name: Aviso de Secrets
+        if: ${{ secrets.RENDER_API_KEY == '' || secrets.RENDER_SERVICE_ID_API == '' || secrets.RENDER_SERVICE_ID_WEB == '' }}
         run: |
           echo "⚠️ ADVERTENCIA: No se configuraron los secrets de Render"
           echo "   - RENDER_API_KEY"
@@ -143,5 +143,5 @@ jobs:
           echo "   - RENDER_SERVICE_ID_WEB"
           echo "   Por favor, configura estos secrets en GitHub para habilitar el deploy automático"
 
-      - name:  Pipeline completado
+      - name: Pipeline completado
         run: echo " CI/CD Pipeline ejecutado exitosamente"
