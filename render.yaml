@@ -3,9 +3,13 @@ services:
     name: P3-31899312-App
     env: node
     plan: free
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm run start:prod
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_PATH
+        value: ./config/database.sqlite
+    routes:
+      - path: /
+        matchType: prefix

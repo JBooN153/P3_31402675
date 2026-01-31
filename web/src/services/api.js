@@ -2,23 +2,28 @@ import axios from 'axios';
 
 // Determinar la URL base según el ambiente
 const getApiBaseUrl = () => {
-  // Si hay variable de entorno VITE_API_URL, usarla
-  if (import.meta.env.VITE_API_URL) {
+  // En el navegador, verificar si estamos en producción
+  const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+  
+  // Si hay variable de entorno VITE_API_URL, usarla (para dev con servidor externo)
+  if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== 'window.location.origin') {
     return import.meta.env.VITE_API_URL;
   }
   
-  // En producción, usar la misma URL del servidor
-  if (import.meta.env.PROD) {
+  // En producción o cuando el hostname no es localhost, usar la misma URL del servidor
+  if (isProduction || import.meta.env.PROD) {
     return window.location.origin;
   }
   
-  // En desarrollo, usar localhost:3000
+  // En desarrollo local, usar localhost:3000
   return 'http://localhost:3000';
 };
 
 const API_BASE_URL = getApiBaseUrl();
 
 console.log('🔌 API Base URL:', API_BASE_URL);
+console.log('🌍 Hostname:', window.location.hostname);
+console.log('📍 Origin:', window.location.origin);
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

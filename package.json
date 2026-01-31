@@ -10,7 +10,7 @@
     "test": "NODE_ENV=test jest",
     "start": "node server.js",
     "dev": "node server.js",
-    "build:web": "cd web && npm ci && npm run build",
+    "build:web": "cd web && npm install --include=dev && npm run build",
     "build": "npm run build:web",
     "start:prod": "npm run build && node server.js"
   },
