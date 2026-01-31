@@ -56,7 +56,7 @@ jobs:
         working-directory: ./web
         run: |
           cat > .env << EOF
-          VITE_API_URL=http://localhost:3000
+          VITE_API_PORT=10000
           VITE_NODE_ENV=production
           EOF
 

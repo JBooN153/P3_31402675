@@ -5,7 +5,7 @@ const getApiBaseUrl = () => {
   // En el navegador, verificar si estamos en producción
   const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
   
-  // Si hay variable de entorno VITE_API_URL, usarla (para dev con servidor externo)
+  // Si hay variable de entorno VITE_API_URL, usarla
   if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== 'window.location.origin') {
     return import.meta.env.VITE_API_URL;
   }
@@ -15,8 +15,9 @@ const getApiBaseUrl = () => {
     return window.location.origin;
   }
   
-  // En desarrollo local, usar localhost:3000
-  return 'http://localhost:3000';
+  // En desarrollo local, usar localhost:10000 (puerto interno de Render) o 3000 por defecto
+  const devPort = import.meta.env.VITE_API_PORT || '10000';
+  return `http://localhost:${devPort}`;
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -24,6 +25,7 @@ const API_BASE_URL = getApiBaseUrl();
 console.log('🔌 API Base URL:', API_BASE_URL);
 console.log('🌍 Hostname:', window.location.hostname);
 console.log('📍 Origin:', window.location.origin);
+console.log('🏭 Environment:', import.meta.env.MODE);
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
