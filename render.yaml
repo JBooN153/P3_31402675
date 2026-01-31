@@ -3,12 +3,7 @@ services:
     name: P3-31899312-App
     env: node
     plan: free
-    buildCommand: npm ci && npm run build
-    startCommand: node server.js
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: DATABASE_PATH
+    buildCommand: npm ci && npm run build && echo "✓ Build completado - public/ contents:" && ls -la public | head -5
         value: ./config/database.sqlite
     routes:
       - path: /
