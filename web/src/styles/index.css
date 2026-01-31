@@ -1,0 +1,100 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Colores Gamer - Paleta Neón */
+  --primary: #00d4ff;
+  --primary-dark: #0099cc;
+  --secondary: #ff006e;
+  --secondary-dark: #cc0055;
+  --accent: #9d4edd;
+  --accent-light: #c77dff;
+  --success: #00f5a0;
+  --warning: #ffbe0b;
+  --danger: #ff4757;
+  
+  /* Fondos */
+  --bg-dark: #0a0e27;
+  --bg-darker: #050709;
+  --bg-card: #1a1f3a;
+  --bg-hover: #252d47;
+  
+  /* Textos */
+  --text-primary: #ffffff;
+  --text-secondary: #b0b9c7;
+  --text-muted: #6c757d;
+  
+  /* Bordes */
+  --border-color: #2d3748;
+  
+  /* Sombras Neon */
+  --shadow-sm: 0 2px 8px rgba(0, 212, 255, 0.1);
+  --shadow-md: 0 4px 16px rgba(0, 212, 255, 0.15);
+  --shadow-lg: 0 8px 24px rgba(0, 212, 255, 0.2);
+  --shadow-xl: 0 12px 32px rgba(0, 212, 255, 0.25);
+  --shadow-glow-primary: 0 0 20px rgba(0, 212, 255, 0.5);
+  --shadow-glow-secondary: 0 0 20px rgba(255, 0, 110, 0.5);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', 'Roboto', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+  color: var(--text-primary);
+  min-height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 0, 110, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+code {
+  font-family: 'Fira Code', 'Courier New', monospace;
+  background: var(--bg-card);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--primary);
+}
+
+/* Scrollbar personalizada - Estilo Gamer */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, var(--primary), var(--accent));
+  border-radius: 10px;
+  border: 2px solid var(--bg-dark);
+  box-shadow: var(--shadow-glow-primary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, var(--primary-dark), var(--accent-light));
+  box-shadow: var(--shadow-glow-secondary);
+}
+

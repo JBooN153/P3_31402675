@@ -1,0 +1,123 @@
+.profile-page {
+  width: 100%;
+  padding: 40px 20px;
+}
+
+.profile-container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.profile-container h1 {
+  margin-bottom: 40px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 40px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.profile-card {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-hover) 100%);
+  border-radius: 16px;
+  border: 2px solid var(--border-color);
+  box-shadow: 0 20px 40px rgba(0, 212, 255, 0.15);
+  overflow: hidden;
+}
+
+.profile-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  color: white;
+  padding: 50px 40px;
+  text-align: center;
+  position: relative;
+}
+
+.profile-header::before {
+  content: '';\n  position: absolute;\n  inset: 0;\n  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 70%);
+}
+
+.profile-avatar {
+  font-size: 80px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+.profile-header h2 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 1;
+}
+
+.profile-info {
+  padding: 40px;
+}
+
+.info-group {
+  margin-bottom: 30px;
+  padding-bottom: 30px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.info-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.info-group label {
+  display: block;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 10px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-group p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.status-active {
+  display: inline-block;
+  background: linear-gradient(135deg, rgba(0, 245, 160, 0.2), rgba(0, 245, 160, 0.1));
+  color: var(--success);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  border: 1px solid var(--success);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 480px) {
+  .profile-header {
+    padding: 40px 20px;
+  }
+
+  .profile-avatar {
+    font-size: 48px;
+  }
+
+  .profile-header h2 {
+    font-size: 24px;
+  }
+
+  .profile-info {
+    padding: 20px;
+  }
+}

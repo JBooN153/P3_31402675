@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#9d4edd;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ff006e;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="controlGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9d4edd;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="url(#bgGradient)" opacity="0.15"/>
+  <circle cx="50" cy="50" r="46" fill="none" stroke="url(#bgGradient)" stroke-width="2"/>
+  
+  <!-- Hand palm -->
+  <path d="M 25 55 Q 20 50 22 40 Q 23 35 28 35 L 28 50 Z" fill="#ffd700" stroke="url(#bgGradient)" stroke-width="1.5"/>
+  
+  <!-- Hand fingers -->
+  <rect x="32" y="28" width="4" height="22" rx="2" fill="#ffd700" stroke="url(#bgGradient)" stroke-width="1"/>
+  <rect x="40" y="25" width="4" height="25" rx="2" fill="#ffd700" stroke="url(#bgGradient)" stroke-width="1"/>
+  <rect x="48" y="26" width="4" height="24" rx="2" fill="#ffd700" stroke="url(#bgGradient)" stroke-width="1"/>
+  <rect x="56" y="28" width="4" height="22" rx="2" fill="#ffd700" stroke="url(#bgGradient)" stroke-width="1"/>
+  
+  <!-- Thumb -->
+  <path d="M 30 48 Q 27 50 28 56 Q 30 60 35 58" fill="#ffd700" stroke="url(#bgGradient)" stroke-width="1" stroke-linecap="round"/>
+  
+  <!-- Game Controller (in hand) -->
+  <g transform="translate(40, 48)">
+    <!-- Controller body -->
+    <rect x="-18" y="-8" width="36" height="16" rx="4" fill="url(#controlGradient)" stroke="#00d4ff" stroke-width="1.5"/>
+    
+    <!-- D-Pad (left side) -->
+    <g>
+      <!-- D-Pad cross -->
+      <rect x="-14" y="-4" width="2" height="8" fill="#ff006e"/>
+      <rect x="-17" y="-1" width="8" height="2" fill="#ff006e"/>
+    </g>
+    
+    <!-- Buttons (right side) -->
+    <circle cx="10" cy="-2" r="1.5" fill="#ff006e"/>
+    <circle cx="14" cy="-2" r="1.5" fill="#00f5a0"/>
+    <circle cx="12" cy="0" r="1.5" fill="#ffbe0b"/>
+    <circle cx="12" cy="-4" r="1.5" fill="#00d4ff"/>
+    
+    <!-- Analog sticks -->
+    <circle cx="-8" cy="4" r="2" fill="#ff006e" stroke="#00d4ff" stroke-width="0.5"/>
+    <circle cx="8" cy="4" r="2" fill="#ff006e" stroke="#00d4ff" stroke-width="0.5"/>
+  </g>
+  
+  <!-- Glow effect -->
+  <circle cx="50" cy="50" r="48" fill="none" stroke="url(#bgGradient)" stroke-width="1" opacity="0.3" filter="blur(2px)"/>
+</svg>
