@@ -30,19 +30,19 @@ jobs:
           echo "📁 Estructura del proyecto:"
           ls -la
           echo ""
-          echo "📦 Verificando package.json en raíz:"
-          test -f package.json && echo "✅ package.json encontrado" || echo "❌ package.json NO encontrado"
+          echo "📦 Verificando package.json en api/:"
+          test -f api/package.json && echo "✅ api/package.json encontrado" || echo "❌ api/package.json NO encontrado"
           echo ""
           echo "📁 Verificando carpeta web:"
           test -d web && echo "✅ carpeta web encontrada" || echo "❌ carpeta web NO encontrada"
 
       # ===== BACKEND - API =====
       - name: Instalar dependencias API
-        working-directory: .
+        working-directory: ./api
         run: npm ci --prefer-offline --no-audit
 
       - name: Crear archivo .env API (testing)
-        working-directory: .
+        working-directory: ./api
         run: |
           cat > .env << EOF
           PORT=3000
@@ -55,11 +55,11 @@ jobs:
           EOF
 
       - name: Validar instalación de dependencias API
-        working-directory: .
+        working-directory: ./api
         run: npm list | head -20
 
       - name: Ejecutar pruebas API
-        working-directory: .
+        working-directory: ./api
         run: npm test -- --passWithNoTests --forceExit --detectOpenHandles
         continue-on-error: true
 
