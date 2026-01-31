@@ -95,7 +95,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy API a Render
-        if: ${{ secrets.RENDER_API_KEY != '' && secrets.RENDER_SERVICE_ID_API != '' }}
+        if: secrets.RENDER_API_KEY != '' && secrets.RENDER_SERVICE_ID_API != ''
         run: |
           echo "🔄 Iniciando deployment de API..."
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
@@ -115,7 +115,7 @@ jobs:
           fi
 
       - name: Deploy Web a Render
-        if: ${{ secrets.RENDER_API_KEY != '' && secrets.RENDER_SERVICE_ID_WEB != '' }}
+        if: secrets.RENDER_API_KEY != '' && secrets.RENDER_SERVICE_ID_WEB != ''
         run: |
           echo " Iniciando deployment de Web..."
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
@@ -135,7 +135,7 @@ jobs:
           fi
 
       - name: Aviso de Secrets
-        if: ${{ secrets.RENDER_API_KEY == '' || secrets.RENDER_SERVICE_ID_API == '' || secrets.RENDER_SERVICE_ID_WEB == '' }}
+        if: secrets.RENDER_API_KEY == '' || secrets.RENDER_SERVICE_ID_API == '' || secrets.RENDER_SERVICE_ID_WEB == ''
         run: |
           echo "⚠️ ADVERTENCIA: No se configuraron los secrets de Render"
           echo "   - RENDER_API_KEY"
