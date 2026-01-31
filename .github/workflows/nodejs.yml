@@ -24,7 +24,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+
+      - name: Verificar estructura del proyecto
+        run: |
+          echo "📁 Estructura del proyecto:"
+          ls -la
+          echo ""
+          echo "📦 Verificando package.json en raíz:"
+          test -f package.json && echo "✅ package.json encontrado" || echo "❌ package.json NO encontrado"
+          echo ""
+          echo "📁 Verificando carpeta web:"
+          test -d web && echo "✅ carpeta web encontrada" || echo "❌ carpeta web NO encontrada"
 
       # ===== BACKEND - API =====
       - name: Instalar dependencias API
