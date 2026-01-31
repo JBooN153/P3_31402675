@@ -63,6 +63,11 @@ module.exports = new EntitySchema({
       nullable: false,
       unique: true,
     },
+    imageUrl: {
+      type: "text",
+      nullable: true,
+      comment: "URL o base64 de la imagen del producto"
+    },
     createdAt: {
       type: "datetime",
       createDate: true,

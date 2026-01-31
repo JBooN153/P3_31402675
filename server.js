@@ -1,10 +1,9 @@
 const app = require('./app'); 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, (err) => {
-    if (!err) {
-        console.log(`Servidor corriendo en puerto ${PORT}`);
-    } else {
-        console.error("Ha ocurrido un error y el servidor no ha iniciado:", err);
-    }
-});
+// El servidor se inicia automáticamente desde app.js
+// Este archivo es un punto de entrada alternativo si se ejecuta directamente
+if (require.main === module) {
+  console.log('ℹ️  Nota: El servidor se inicia automáticamente desde app.js');
+  console.log(`✅ Servidor disponible en http://localhost:${PORT}`);
+}

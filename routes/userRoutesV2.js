@@ -1,7 +1,7 @@
 const express = require('express');
 const authenticateJWT = require('../middlewares/auth');
-const { getAll: getAllCategories, create: createCategory, update: updateCategory, delete: deleteCategory } = require('../controllers/Category');
-const { getAll: getAllTags, create: createTag, update: updateTag, delete: deleteTag } = require('../controllers/Tag');
+const { getAll: getAllCategories, getById: getCategoryById, create: createCategory, update: updateCategory, delete: deleteCategory } = require('../controllers/Category');
+const { getAll: getAllTags, getById: getTagById, create: createTag, update: updateTag, delete: deleteTag } = require('../controllers/Tag');
 const { list: listProducts, publicView, getById, create, update, delete: deleteProduct } = require('../controllers/Product');
 const { create: createOrder, list: listOrders, getById: getOrderById } = require('../controllers/Order');
 
@@ -81,6 +81,11 @@ const router = express.Router();
  *           items:
  *             type: integer
  *           description: List of tag IDs to associate
+ *         imageUrl:
+ *           type: string
+ *           description: URL or base64 encoded image data (data:image/png;base64,...)
+ *           example: "https://example.com/image.jpg"
+ *           nullable: true
  *
  *     Category:
  *       type: object
@@ -160,6 +165,11 @@ const router = express.Router();
  *         slug:
  *           type: string
  *           example: "god-of-war-ps4"
+ *         imageUrl:
+ *           type: string
+ *           nullable: true
+ *           example: "https://example.com/god-of-war.jpg"
+ *           description: "URL o datos base64 de la imagen del producto"
  *
  *     OrderCreate:
  *       type: object
@@ -533,6 +543,7 @@ router.get('/games', listProducts);
  */
 // Category routes (protected)
 router.get('/categories', authenticateJWT, getAllCategories);
+router.get('/categories/:id', authenticateJWT, getCategoryById);
 router.post('/categories', authenticateJWT, require('../middlewares/validators').categoryCreate, createCategory);
 router.put('/categories/:id', authenticateJWT, require('../middlewares/validators').categoryUpdate, updateCategory);
 router.delete('/categories/:id', authenticateJWT, deleteCategory);
@@ -540,6 +551,50 @@ router.delete('/categories/:id', authenticateJWT, deleteCategory);
 /**
  * @swagger
  * /v2/categories/{id}:
+ *   get:
+ *     summary: Obtener una categoría por ID
+ *     tags: ["Admin - Categories"]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la categoría
+ *     responses:
+ *       200:
+ *         description: Categoría encontrada
+ *         content:
+ *           application/json:
+ *             example:
+ *               status: success
+ *               data:
+ *                 id: 1
+ *                 name: "Action"
+ *                 description: "Action games category"
+ *       400:
+ *         description: ID inválido
+ *         content:
+ *           application/json:
+ *             example:
+ *               status: fail
+ *               message: "Invalid category id"
+ *       404:
+ *         description: Categoría no encontrada
+ *         content:
+ *           application/json:
+ *             example:
+ *               status: fail
+ *               message: "Category not found"
+ *       500:
+ *         description: Error interno
+ *         content:
+ *           application/json:
+ *             example:
+ *               status: error
+ *               message: "Internal Server Error"
  *   put:
  *     summary: Actualizar una categoría por ID
  *     tags: ["Admin - Categories"]
@@ -676,6 +731,7 @@ router.delete('/categories/:id', authenticateJWT, deleteCategory);
  */
 // Tag routes (protected)
 router.get('/tags', authenticateJWT, getAllTags);
+router.get('/tags/:id', authenticateJWT, getTagById);
 router.post('/tags', authenticateJWT, require('../middlewares/validators').tagCreate, createTag);
 router.put('/tags/:id', authenticateJWT, require('../middlewares/validators').tagUpdate, updateTag);
 router.delete('/tags/:id', authenticateJWT, deleteTag);
@@ -683,6 +739,49 @@ router.delete('/tags/:id', authenticateJWT, deleteTag);
 /**
  * @swagger
  * /v2/tags/{id}:
+ *   get:
+ *     summary: Obtener una etiqueta por ID
+ *     tags: ["Admin - Tags"]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la etiqueta
+ *     responses:
+ *       200:
+ *         description: Etiqueta encontrada
+ *         content:
+ *           application/json:
+ *             example:
+ *               status: success
+ *               data:
+ *                 id: 1
+ *                 name: "Adventure"
+ *       400:
+ *         description: ID inválido
+ *         content:
+ *           application/json:
+ *             example:
+ *               status: fail
+ *               message: "Invalid tag id"
+ *       404:
+ *         description: Etiqueta no encontrada
+ *         content:
+ *           application/json:
+ *             example:
+ *               status: fail
+ *               message: "Tag not found"
+ *       500:
+ *         description: Error interno
+ *         content:
+ *           application/json:
+ *             example:
+ *               status: error
+ *               message: "Internal Server Error"
  *   put:
  *     summary: Actualizar una etiqueta por ID
  *     tags: ["Admin - Tags"]

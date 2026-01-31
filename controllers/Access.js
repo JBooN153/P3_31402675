@@ -34,7 +34,11 @@ const registerUser = async (req, res) => {
         await AppDataSource.getRepository(Usuario).save(usuario);
 
         const { contrasena: _, ...usuarioData } = usuario;
-        res.status(201).json({ status: "success", data: usuarioData });
+        res.status(201).json({ 
+            status: "success", 
+            message: "Usuario registrado exitosamente",
+            data: usuarioData 
+        });
     } catch (error) {
         res.status(500).json({ status: "error", message: "Error al registrar el usuario", error: error.message });
     }
@@ -71,7 +75,14 @@ const loginUser = async (req, res) => {
 
         const token = jwt.sign({ id: usuario.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        res.json({ status: "success", token });
+        const { contrasena: _, ...usuarioData } = usuario;
+        res.json({ 
+            status: "success", 
+            data: {
+                token,
+                user: usuarioData
+            }
+        });
     } catch (error) {
         console.error('Error al iniciar sesión:', error);
         res.status(500).json({ status: "error", message: "Error al iniciar sesión." });

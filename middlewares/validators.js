@@ -39,6 +39,7 @@ const gameCreate = [
   body('stock').optional().isInt({ min: 0 }),
   body('categoryId').optional().isInt({ min: 1 }),
   body('tags').optional().isArray(),
+  body('imageUrl').optional().isString(),
   checkValidation,
 ];
 
@@ -51,6 +52,7 @@ const gameUpdate = [
   body('stock').optional().isInt({ min: 0 }),
   body('categoryId').optional().isInt({ min: 1 }),
   body('tags').optional().isArray(),
+  body('imageUrl').optional().isString(),
   checkValidation,
 ];
 

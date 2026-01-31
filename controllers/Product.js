@@ -315,6 +315,12 @@ const productController = {
         return res.status(404).json({ status: "fail", message: "Product not found" });
       }
 
+      // Eliminar primero los OrderItems asociados a este producto
+      const OrderItem = require('../models/OrderItem');
+      const orderItemRepo = AppDataSource.getRepository(OrderItem);
+      await orderItemRepo.delete({ product: { id } });
+
+      // Luego eliminar el producto
       await productRepository.remove(product);
       return res.status(200).json({ status: "success", message: "Product deleted" });
     } catch (error) {
