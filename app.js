@@ -138,6 +138,21 @@ app.get('/ping', (req, res) => {
   res.sendStatus(200);
 });
 
+// Fallback para SPA (React Router)
+// Debe ir al final, después de todas las rutas de API
+app.get('*', (req, res) => {
+  // Si es una ruta de API, no la sirva
+  if (req.path.startsWith('/api') || req.path.startsWith('/v2') || req.path.startsWith('/api-docs')) {
+    return res.status(404).json({ error: 'Ruta no encontrada' });
+  }
+  // Sirve index.html para todas las demás rutas (React Router)
+  res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
+    if (err) {
+      res.status(404).json({ error: 'Frontend no disponible' });
+    }
+  });
+});
+
 // Iniciar servidor si no es test
 if (process.env.NODE_ENV !== 'test') {
   (async () => {

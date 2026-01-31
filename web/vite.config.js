@@ -8,7 +8,7 @@ export default defineConfig({
     open: true,
   },
   build: {
-    outDir: '../api/public',
+    outDir: '../public',
     sourcemap: false,
   },
 })
