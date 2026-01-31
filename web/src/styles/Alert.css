@@ -1,0 +1,94 @@
+.alert {
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: slideIn 0.4s ease;
+  border: 2px solid;
+  backdrop-filter: blur(10px);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.alert::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-info {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.alert-info::before {
+  background: var(--primary);
+}
+
+.alert-success {
+  background: linear-gradient(135deg, rgba(0, 245, 160, 0.1) 0%, rgba(0, 245, 160, 0.05) 100%);
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.alert-success::before {
+  background: var(--success);
+}
+
+.alert-error {
+  background: linear-gradient(135deg, rgba(255, 71, 87, 0.1) 0%, rgba(255, 71, 87, 0.05) 100%);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.alert-error::before {
+  background: var(--danger);
+}
+
+.alert-warning {
+  background: linear-gradient(135deg, rgba(255, 190, 11, 0.1) 0%, rgba(255, 190, 11, 0.05) 100%);
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+.alert-warning::before {
+  background: var(--warning);
+}
+
+.alert-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: inherit;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.alert-close:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}

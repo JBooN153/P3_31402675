@@ -11,6 +11,22 @@ const categoryController = {
     }
   },
 
+  async getById(req, res) {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ status: "fail", message: "Invalid category id" });
+      }
+      const category = await AppDataSource.getRepository(Category).findOneBy({ id });
+      if (!category) {
+        return res.status(404).json({ status: "fail", message: "Category not found" });
+      }
+      return res.status(200).json({ status: "success", data: category });
+    } catch (e) {
+      return res.status(500).json({ status: "error", message: e.message });
+    }
+  },
+
   async create(req, res) {
     try {
       const repo = AppDataSource.getRepository(Category);

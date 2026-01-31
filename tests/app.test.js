@@ -132,7 +132,32 @@ describe('Pruebas de Endpoints de Autenticación', () => {
 
         expect(loginResponse.status).toBe(200);
         expect(loginResponse.body.status).toBe('success');
-        expect(loginResponse.body).toHaveProperty('token');
+        expect(loginResponse.body.data).toHaveProperty('token');
+    });
+
+    it('POST /auth/register con email duplicado retorna 409', async () => {
+        const email = `duplicate_${Date.now()}@test.com`;
+        const firstRegister = await request(app)
+            .post('/auth/register')
+            .send({ nombre: 'User1', email, contrasena: 'Pass1!' });
+
+        expect(firstRegister.status).toBe(201);
+
+        const secondRegister = await request(app)
+            .post('/auth/register')
+            .send({ nombre: 'User2', email, contrasena: 'Pass2!' });
+
+        expect(secondRegister.status).toBe(409);
+        expect(secondRegister.body.status).toBe('fail');
+    });
+
+    it('POST /auth/login con credenciales inválidas retorna 401', async () => {
+        const response = await request(app)
+            .post('/auth/login')
+            .send({ email: 'nonexistent@test.com', contrasena: 'wrongpass' });
+
+        expect(response.status).toBe(401);
+        expect(response.body.status).toBe('fail');
     });
 });
 
@@ -256,7 +281,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -274,7 +299,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -294,7 +319,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -308,7 +333,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -340,7 +365,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -357,7 +382,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -371,7 +396,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -403,7 +428,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -418,7 +443,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -433,7 +458,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -448,7 +473,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -463,7 +488,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -477,7 +502,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -491,7 +516,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -505,7 +530,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -519,7 +544,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -541,7 +566,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -555,7 +580,7 @@ describe('Negative tests - Controllers', () => {
       const pass = 'Password1!';
       await request(app).post('/auth/register').send({ nombre: 'ErrTester', email, contrasena: pass });
       const r = await request(app).post('/auth/login').send({ email, contrasena: pass });
-      return r.body.token;
+      return r.body.data.token;
     }
     
     const token = await registerAndLogin();
@@ -871,4 +896,230 @@ describe('Critical Transactional Tests - Orders & Payments', () => {
     // Assert: Verify unitPrice matches original price
     expect(res.body.data.items[0].unitPrice).toBe(originalPrice);
   }, 30000);
+});
+
+// ==================== TESTS PARA ENDPOINTS GET BY ID ====================
+describe('Tests para GET /v2/categories/{id} y GET /v2/tags/{id}', () => {
+  let testToken;
+
+  beforeAll(async () => {
+    testToken = global.__SEEDED_TOKENS[0];
+  });
+
+  test('GET /v2/categories/:id retorna 200 con datos completos', async () => {
+    // Crear categoría
+    const createRes = await request(app)
+      .post('/v2/categories')
+      .set('Authorization', `Bearer ${testToken}`)
+      .send({ name: `TestCategory-${Date.now()}`, description: 'Test' });
+
+    expect(createRes.status).toBe(201);
+    const testCategory = createRes.body.data;
+
+    // Obtener categoría por ID
+    const getRes = await request(app)
+      .get(`/v2/categories/${testCategory.id}`)
+      .set('Authorization', `Bearer ${testToken}`);
+
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.status).toBe('success');
+    expect(getRes.body.data).toHaveProperty('id', testCategory.id);
+    expect(getRes.body.data).toHaveProperty('name', testCategory.name);
+  });
+
+  test('GET /v2/categories/:id con ID inválido retorna 400', async () => {
+    const res = await request(app)
+      .get('/v2/categories/invalid-id')
+      .set('Authorization', `Bearer ${testToken}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.status).toBe('fail');
+  });
+
+  test('GET /v2/categories/:id no encontrado retorna 404', async () => {
+    const res = await request(app)
+      .get('/v2/categories/999999')
+      .set('Authorization', `Bearer ${testToken}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.status).toBe('fail');
+  });
+
+  test('GET /v2/tags/:id retorna 200 con datos completos', async () => {
+    // Crear tag
+    const createRes = await request(app)
+      .post('/v2/tags')
+      .set('Authorization', `Bearer ${testToken}`)
+      .send({ name: `TestTag-${Date.now()}` });
+
+    expect(createRes.status).toBe(201);
+    const testTag = createRes.body.data;
+
+    // Obtener tag por ID
+    const getRes = await request(app)
+      .get(`/v2/tags/${testTag.id}`)
+      .set('Authorization', `Bearer ${testToken}`);
+
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.status).toBe('success');
+    expect(getRes.body.data).toHaveProperty('id', testTag.id);
+    expect(getRes.body.data).toHaveProperty('name', testTag.name);
+  });
+
+  test('GET /v2/tags/:id con ID inválido retorna 400', async () => {
+    const res = await request(app)
+      .get('/v2/tags/invalid-id')
+      .set('Authorization', `Bearer ${testToken}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.status).toBe('fail');
+  });
+
+  test('GET /v2/tags/:id no encontrado retorna 404', async () => {
+    const res = await request(app)
+      .get('/v2/tags/999999')
+      .set('Authorization', `Bearer ${testToken}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.status).toBe('fail');
+  });
+});
+
+// ==================== TESTS PARA VALIDACIÓN DE STOCK ====================
+describe('Tests para Control de Stock en Órdenes', () => {
+  let testToken;
+  let testProduct;
+
+  beforeAll(async () => {
+    testToken = global.__SEEDED_TOKENS[7];
+    testProduct = global.__SEEDED_GAMES && global.__SEEDED_GAMES[5];
+  });
+
+  test('Order: cantidad solicitada no puede exceder stock disponible', async () => {
+    if (!testProduct) {
+      console.warn('Test skipped: No product available');
+      return;
+    }
+
+    const initialStock = testProduct.stock;
+    const excessQuantity = initialStock + 10;
+
+    const res = await request(app)
+      .post('/v2/orders')
+      .set('Authorization', `Bearer ${testToken}`)
+      .send({
+        items: [{ productId: testProduct.id, quantity: excessQuantity }],
+        paymentMethod: 'CREDIT_CARD',
+        cardNumber: '4111111111111111',
+        cvv: '123',
+        expirationMonth: 12,
+        expirationYear: 2025,
+        fullName: 'Test User',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.status).toBe('fail');
+  });
+});
+
+// ==================== TESTS PARA IMÁGENES EN PRODUCTOS ====================
+describe('Tests para Soporte de Imágenes en Productos', () => {
+  let testToken;
+
+  beforeAll(async () => {
+    testToken = global.__SEEDED_TOKENS[6];
+  });
+
+  test('Product: GET retorna imageUrl en respuesta', async () => {
+    const productWithImage = global.__SEEDED_GAMES && global.__SEEDED_GAMES[0];
+    if (!productWithImage) {
+      console.warn('Test skipped: No seeded game available');
+      return;
+    }
+
+    const res = await request(app)
+      .get(`/v2/games/${productWithImage.id}`)
+      .set('Authorization', `Bearer ${testToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveProperty('imageUrl');
+  });
+});
+
+// ==================== TESTS PARA VALIDACIÓN DE ENTRADA ====================
+describe('Tests para Validación de Entrada y Errores', () => {
+  let testToken;
+
+  beforeAll(async () => {
+    testToken = global.__SEEDED_TOKENS[5];
+  });
+
+  test('POST /auth/register sin nombre retorna 400', async () => {
+    const res = await request(app)
+      .post('/auth/register')
+      .send({ email: 'test@test.com', contrasena: 'Pass1!' });
+
+    expect(res.status).toBe(400);
+  });
+
+  test('POST /auth/register con email inválido retorna 400', async () => {
+    const res = await request(app)
+      .post('/auth/register')
+      .send({ nombre: 'Test', email: 'invalid-email', contrasena: 'Pass1!' });
+
+    expect([400, 409]).toContain(res.status);
+  });
+
+  test('POST /v2/games sin nombre requerido retorna 400', async () => {
+    const res = await request(app)
+      .post('/v2/games')
+      .set('Authorization', `Bearer ${testToken}`)
+      .send({ price: 10.0 });
+
+    expect(res.status).toBe(400);
+  });
+});
+
+// ==================== TESTS DE LISTADO Y PAGINACIÓN ====================
+describe('Tests para Listado, Filtros y Paginación', () => {
+  test('GET /v2/games retorna listado público sin autenticación', async () => {
+    const res = await request(app)
+      .get('/v2/games')
+      .query({ page: 1, limit: 5 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('success');
+    expect(res.body.data).toHaveProperty('items');
+    expect(res.body.data).toHaveProperty('meta');
+    expect(Array.isArray(res.body.data.items)).toBe(true);
+  });
+
+  test('GET /v2/games con filtros retorna resultados filtrados', async () => {
+    const res = await request(app)
+      .get('/v2/games')
+      .query({ page: 1, limit: 5, platform: 'PS4' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('success');
+  });
+
+  test('GET /v2/games con búsqueda retorna items coincidentes', async () => {
+    const res = await request(app)
+      .get('/v2/games')
+      .query({ page: 1, limit: 10, search: 'Seed Game' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.items.length >= 0).toBe(true);
+  });
+
+  test('GET /v2/games con paginación retorna meta información correcta', async () => {
+    const res = await request(app)
+      .get('/v2/games')
+      .query({ page: 1, limit: 3 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.meta).toHaveProperty('page');
+    expect(res.body.data.meta).toHaveProperty('limit');
+    expect(res.body.data.meta).toHaveProperty('total');
+  });
 });

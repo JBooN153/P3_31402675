@@ -22,8 +22,10 @@ const AppDataSource = new DataSource({
 const iniciarServer = async () => {
   try {
     await AppDataSource.initialize();
+    console.log('✅ Base de datos conectada');
   } catch (error) {
-  
+    console.error('❌ Error al conectar la base de datos:', error.message);
+    process.exit(1);
   }
 };
 

@@ -1,6 +1,8 @@
 // app.js
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
+const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsDoc = require('swagger-jsdoc');
 const { iniciarServer } = require('./config/databaseConfig');
@@ -11,8 +13,26 @@ const userRoutesV2 = require('./routes/userRoutesV2');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
-app.use(express.json());
+// Middleware xd
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Servir archivos estáticos del frontend (build de Vite)
+const frontendPath = path.join(__dirname, './public');
+app.use(express.static(frontendPath));
+
+// CORS Configuration
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL || 'http://localhost:5173'
+    : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 
 // Swagger Config
 const swaggerOptions = {
@@ -52,6 +72,21 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 // Rutas externas
 app.use('/', userRoutes);
 app.use('/v2', userRoutesV2);
+
+// Fallback para SPA (React Router)
+// Debe ir al final, después de todas las rutas de API
+app.get('*', (req, res) => {
+  // Si es una ruta de API, no la sirva
+  if (req.path.startsWith('/api') || req.path.startsWith('/v2') || req.path.startsWith('/api-docs')) {
+    return res.status(404).json({ error: 'Ruta no encontrada' });
+  }
+  // Sirve index.html para todas las demás rutas (React Router)
+  res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
+    if (err) {
+      res.status(404).json({ error: 'Frontend no disponible' });
+    }
+  });
+});
 
 // Rutas externas adicionales
 /**
@@ -106,20 +141,38 @@ app.get('/ping', (req, res) => {
 // Iniciar servidor si no es test
 if (process.env.NODE_ENV !== 'test') {
   (async () => {
-    // Inicializar configuración de pagos
-    await PaymentApiInitializer.inicializar();
-    
-    // Iniciar base de datos
-    iniciarServer();
-    
-    // Escuchar en el puerto
-    app.listen(port, () => {
-      console.log(`Servidor corriendo en http://localhost:${port}`);
-    });
-  })().catch(err => {
-    console.error('Error al iniciar el servidor:', err);
-    process.exit(1);
-  });
+    try {
+      // Inicializar configuración de pagos
+      await PaymentApiInitializer.inicializar();
+      console.log('✅ PaymentAPI inicializado');
+      
+      // Iniciar base de datos
+      await iniciarServer();
+      
+      // Escuchar en el puerto
+      const server = app.listen(port, () => {
+        console.log(`✅ Servidor corriendo en http://localhost:${port}`);
+      });
+      
+      // Mantener el servidor vivo
+      server.on('error', (err) => {
+        console.error('❌ Error del servidor:', err);
+        process.exit(1);
+      });
+      
+      // Manejar shutdown graceful
+      process.on('SIGINT', () => {
+        console.log('\n⛔ Cerrando servidor...');
+        server.close(() => {
+          console.log('✅ Servidor cerrado');
+          process.exit(0);
+        });
+      });
+    } catch (err) {
+      console.error('❌ Error al iniciar el servidor:', err);
+      process.exit(1);
+    }
+  })();
 }
 
 

@@ -1,4 +1,74 @@
-node_modules
+# Dependencias
+node_modules/
+npm-debug.log*
+npm-error.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ambiente
 .env
-database.sqlite
-# Keep environment variables and database out of version control
+.env.local
+.env.*.local
+.env.production
+
+# Base de datos
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+logs/
+*.log
+lerna-debug.log*
+
+# Build
+dist/
+build/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Archivos temporales
+tmp/
+temp/
+*.tmp
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Archivos de configuración local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Secrets
+secrets/
+.secrets
+
+# Package manager específico
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*

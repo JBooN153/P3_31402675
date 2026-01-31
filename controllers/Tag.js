@@ -11,6 +11,22 @@ const tagController = {
     }
   },
 
+  async getById(req, res) {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ status: "fail", message: "Invalid tag id" });
+      }
+      const tag = await AppDataSource.getRepository(Tag).findOneBy({ id });
+      if (!tag) {
+        return res.status(404).json({ status: "fail", message: "Tag not found" });
+      }
+      return res.status(200).json({ status: "success", data: tag });
+    } catch (e) {
+      return res.status(500).json({ status: "error", message: e.message });
+    }
+  },
+
   async create(req, res) {
     try {
       const repo = AppDataSource.getRepository(Tag);
