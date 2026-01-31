@@ -25,7 +25,11 @@ const iniciarServer = async () => {
     console.log('✅ Base de datos conectada');
   } catch (error) {
     console.error('❌ Error al conectar la base de datos:', error.message);
-    process.exit(1);
+    // Solo hacer exit si no es un test
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(1);
+    }
+    throw error; // Re-lanzar el error para que los tests lo capturen
   }
 };
 

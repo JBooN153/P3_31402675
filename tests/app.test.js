@@ -1,4 +1,13 @@
 const request = require('supertest');
+
+// IMPORTANTE: Configurar NODE_ENV ANTES de cargar dotenv y app
+process.env.NODE_ENV = 'test';
+process.env.DATABASE_PATH = './config/test_database.sqlite';
+process.env.TEST_DATABASE_PATH = ':memory:';
+process.env.JWT_SECRET = 'test-secret-key-12345';
+process.env.FRONTEND_URL = 'http://localhost:5173';
+process.env.PAYMENT_API_URL = 'https://fakepayment.onrender.com';
+
 require('dotenv').config();
 
 // Mock axios ANTES de cargar la app
